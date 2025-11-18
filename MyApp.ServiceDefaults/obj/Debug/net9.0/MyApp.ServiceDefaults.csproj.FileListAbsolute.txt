@@ -1,0 +1,12 @@
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/bin/Debug/net9.0/MyApp.ServiceDefaults.deps.json
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/bin/Debug/net9.0/MyApp.ServiceDefaults.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/bin/Debug/net9.0/MyApp.ServiceDefaults.pdb
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.csproj.AssemblyReference.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.AssemblyInfoInputs.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.AssemblyInfo.cs
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.csproj.CoreCompileInputs.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/refint/MyApp.ServiceDefaults.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.pdb
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/ref/MyApp.ServiceDefaults.dll

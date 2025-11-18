@@ -1,0 +1,117 @@
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Dashboard</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Accueil
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="products">
+                <span class="bi bi-box-seam-nav-menu" aria-hidden="true"></span> Produits
+            </NavLink>
+        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3 mt-3">
+                    <div class="text-white-50 small px-2">Pages authentifiées</div>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="my-orders">
+                        <span class="bi bi-cart-check-nav-menu" aria-hidden="true"></span> 
+                        <AuthorizeView Roles="admin" Context="adminRoleContext">
+                            <Authorized Context="adminRoleContext">Commandes</Authorized>
+                            <NotAuthorized Context="adminRoleContext">Mes Commandes</NotAuthorized>
+                        </AuthorizeView>
+                    </NavLink>
+                </div>
+
+                <AuthorizeView Roles="admin" Context="adminContext">
+                    <Authorized Context="adminContext">
+                        <div class="nav-item px-3 mt-3">
+                            <div class="text-white-50 small px-2">Administration</div>
+                        </div>
+
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="admin">
+                                <span class="bi bi-gear-nav-menu" aria-hidden="true"></span> Administration
+                            </NavLink>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3 mt-4 pt-4" style="border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div class="text-white small mb-2">
+                        Connecté en tant que:<br/>
+                        <strong>@context.User.Identity?.Name</strong>
+                    </div>
+                    <form id="logoutForm" action="/logout" method="post" style="display: none;">
+                        <AntiforgeryToken />
+                    </form>
+                    <button type="button" class="btn btn-sm btn-outline-light w-100" @onclick="HandleLogout" @onclick:preventDefault="true" disabled="@isLoggingOut">
+                        @if (isLoggingOut)
+                        {
+                            <span>Déconnexion...</span>
+                        }
+                        else
+                        {
+                            <span>Déconnexion</span>
+                        }
+                    </button>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3 mt-4 pt-4" style="border-top: 1px solid rgba(255,255,255,0.2);">
+                    <a href="/login" class="btn btn-sm btn-outline-light w-100">
+                       Connexion
+                    </a>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    private bool isLoggingOut = false;
+
+    private async Task HandleLogout()
+    {
+        // Empêcher les clics multiples
+        if (isLoggingOut)
+        {
+            return;
+        }
+
+        isLoggingOut = true;
+        StateHasChanged();
+
+        try
+        {
+            // Utiliser une navigation complète du navigateur pour éviter la négociation SignalR
+            // Faire une requête POST avec fetch pour la déconnexion, puis rediriger
+            await JSRuntime.InvokeVoidAsync("performLogout");
+        }
+        catch
+        {
+            // En cas d'erreur, forcer une navigation complète vers /logout
+            await JSRuntime.InvokeVoidAsync("eval", "window.location.replace('/logout')");
+        }
+    }
+}

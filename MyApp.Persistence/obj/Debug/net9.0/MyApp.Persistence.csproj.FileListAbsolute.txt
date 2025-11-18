@@ -1,0 +1,14 @@
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/bin/Debug/net9.0/MyApp.Persistence.deps.json
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/bin/Debug/net9.0/MyApp.Persistence.runtimeconfig.json
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/bin/Debug/net9.0/MyApp.Persistence.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/bin/Debug/net9.0/MyApp.Persistence.pdb
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.csproj.AssemblyReference.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.GeneratedMSBuildEditorConfig.editorconfig
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.AssemblyInfoInputs.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.AssemblyInfo.cs
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.csproj.CoreCompileInputs.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/refint/MyApp.Persistence.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.pdb
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.genruntimeconfig.cache
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/ref/MyApp.Persistence.dll

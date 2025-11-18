@@ -1,0 +1,326 @@
+@page "/my-orders"
+@using MyApp.WebApp.Clients
+@using MyApp.Persistence
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject IOrderClient orderClient
+@inject IAdminClient adminClient
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>@(isAdmin ? "Commandes" : "Mes Commandes")</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>@(isAdmin ? "Commandes" : "Mes Commandes")</h1>
+    <AuthorizeView Roles="admin">
+        <Authorized>
+            <a href="/admin" class="btn btn-primary">
+                <span class="bi bi-gear"></span> Mode Admin
+            </a>
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+@if (orders == null)
+{
+    <p>Chargement...</p>
+}
+else if (orders.Count == 0)
+{
+    <p>Aucune commande pour le moment.</p>
+}
+else
+{
+    <div class="accordion" id="ordersAccordion">
+        @foreach (var order in orders)
+        {
+            var orderId = order.Id;
+            var expandedId = $"order-{orderId}";
+            var isExpanded = expandedOrders.Contains(orderId);
+            
+            <div class="accordion-item mb-3 border rounded">
+                <h2 class="accordion-header" id="heading-@orderId">
+                    <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" 
+                            @onclick="() => ToggleOrder(orderId)"
+                            aria-expanded="@isExpanded.ToString().ToLower()" 
+                            aria-controls="collapse-@orderId">
+                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fw-bold">Commande #@order.Id</span>
+                                <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
+                                <span class="text-muted">@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                <AuthorizeView Roles="admin">
+                                    <Authorized>
+                                        <span class="text-muted small">
+                                            @if (!string.IsNullOrEmpty(order.UserName))
+                                            {
+                                                <span>@order.UserName</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Utilisateur: @order.UserId</span>
+                                            }
+                                        </span>
+                                    </Authorized>
+                                </AuthorizeView>
+                            </div>
+                            <span class="h5 mb-0 text-primary">@order.TotalAmount.ToString("C")</span>
+                        </div>
+                    </button>
+                </h2>
+                @if (isExpanded)
+                {
+                    <div id="collapse-@orderId" class="accordion-collapse collapse show" aria-labelledby="heading-@orderId">
+                        <div class="accordion-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p><strong>Date:</strong> @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                    <p><strong>Statut:</strong> <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span></p>
+                                    <AuthorizeView Roles="admin">
+                                        <Authorized>
+                                            <p><strong>Utilisateur:</strong> 
+                                                @if (!string.IsNullOrEmpty(order.UserName))
+                                                {
+                                                    <span>@order.UserName</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@order.UserId</span>
+                                                }
+                                            </p>
+                                        </Authorized>
+                                    </AuthorizeView>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Montant Total:</strong> <span class="h5 text-primary">@order.TotalAmount.ToString("C")</span></p>
+                                    <p><strong>Adresse de livraison:</strong></p>
+                                    <p class="border p-2 bg-light">@(string.IsNullOrEmpty(order.Address) ? "Non renseignée" : order.Address)</p>
+                                </div>
+                            </div>
+                            
+                            <hr/>
+                            
+                            <h6 class="mb-3">Produits commandés:</h6>
+                            <div class="row g-3">
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="card h-100">
+                                            <div class="card-img-top-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                                @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                                {
+                                                    <img src="@item.Product.ImageUrl" alt="@item.Product.Name" 
+                                                         class="card-img-top" style="object-fit: cover; width: 100%; height: 100%;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-muted">
+                                                        <span class="bi bi-image" style="font-size: 3rem;"></span>
+                                                        <p class="mt-2">Pas d'image</p>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="card-body">
+                                                <h6 class="card-title">@item.Product.Name</h6>
+                                                @if (!string.IsNullOrEmpty(item.Product.Description))
+                                                {
+                                                    <p class="card-text small text-muted">@(item.Product.Description.Length > 100 ? item.Product.Description.Substring(0, 100) + "..." : item.Product.Description)</p>
+                                                }
+                                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                                    <span class="text-muted">Quantité: <strong>@item.Quantity</strong></span>
+                                                    <span class="fw-bold">@item.UnitPrice.ToString("C")</span>
+                                                </div>
+                                                <div class="mt-2 pt-2 border-top">
+                                                    <small class="text-muted">Sous-total: </small>
+                                                    <strong class="text-primary">@((item.Quantity * item.UnitPrice).ToString("C"))</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            
+                            <AuthorizeView Roles="admin">
+                                <Authorized>
+                                    <hr/>
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Lien de paiement:</strong></label>
+                                        @if (!string.IsNullOrEmpty(order.PaymentLink))
+                                        {
+                                            var orderIdForCopy = order.Id;
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" value="@order.PaymentLink" readonly id="paymentLink-@order.Id" />
+                                                <button class="btn btn-outline-secondary" type="button" @onclick='() => CopyPaymentLink(orderIdForCopy)'>
+                                                    Copier
+                                                </button>
+                                            </div>
+                                            <a href="@order.PaymentLink" target="_blank" class="btn btn-sm btn-success">
+                                                Ouvrir le lien de paiement
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" @bind="newPaymentLink" placeholder="https://exemple.com/paiement/..." />
+                                                <button class="btn btn-primary" type="button" @onclick="() => GeneratePaymentLink(order.Id)" disabled="@isGeneratingLink">
+                                                    @if (isGeneratingLink)
+                                                    {
+                                                        <span>Génération...</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Générer le lien</span>
+                                                    }
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </Authorized>
+                            </AuthorizeView>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success") alert-dismissible fade show mt-3" role="alert">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+@code {
+    private List<Order>? orders = null;
+    private string message = string.Empty;
+    private bool isError = false;
+    private string newPaymentLink = string.Empty;
+    private bool isGeneratingLink = false;
+    private HashSet<int> expandedOrders = new HashSet<int>();
+    private bool isAdmin = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isAdmin = await IsAdminAsync();
+            await LoadOrders();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            // Si admin, charger toutes les commandes, sinon seulement celles de l'utilisateur
+            var isAdmin = await IsAdminAsync();
+            if (isAdmin)
+            {
+                orders = await adminClient.GetOrdersAsync();
+            }
+            else
+            {
+                orders = await orderClient.GetOrdersAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur lors du chargement des commandes: {ex.Message}";
+            isError = true;
+            orders = new List<Order>();
+        }
+    }
+
+    private async Task<bool> IsAdminAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        return authState.User.IsInRole("admin");
+    }
+
+    private void ToggleOrder(int orderId)
+    {
+        if (expandedOrders.Contains(orderId))
+        {
+            expandedOrders.Remove(orderId);
+        }
+        else
+        {
+            expandedOrders.Add(orderId);
+        }
+        StateHasChanged();
+    }
+
+    private async Task GeneratePaymentLink(int orderId)
+    {
+        if (string.IsNullOrWhiteSpace(newPaymentLink))
+        {
+            message = "Veuillez entrer un lien de paiement.";
+            isError = true;
+            StateHasChanged();
+            return;
+        }
+
+        isGeneratingLink = true;
+        StateHasChanged();
+
+        try
+        {
+            var updatedOrder = await adminClient.GeneratePaymentLinkAsync(orderId, newPaymentLink.Trim());
+            message = "Lien de paiement généré avec succès!";
+            isError = false;
+            
+            // Recharger les commandes pour mettre à jour les données
+            await LoadOrders();
+            newPaymentLink = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur lors de la génération du lien: {ex.Message}";
+            isError = true;
+        }
+        finally
+        {
+            isGeneratingLink = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CopyPaymentLink(int orderId)
+    {
+        var order = orders?.FirstOrDefault(o => o.Id == orderId);
+        var link = order?.PaymentLink;
+        if (!string.IsNullOrEmpty(link))
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("copyToClipboard", link);
+                message = "Lien copié dans le presse-papiers!";
+                isError = false;
+            }
+            catch (Exception ex)
+            {
+                message = $"Erreur lors de la copie: {ex.Message}";
+                isError = true;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private string GetStatusBadgeClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "bg-warning",
+            OrderStatus.Confirmed => "bg-info",
+            OrderStatus.Shipped => "bg-primary",
+            OrderStatus.Delivered => "bg-success",
+            OrderStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

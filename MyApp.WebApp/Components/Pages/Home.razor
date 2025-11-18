@@ -1,0 +1,49 @@
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
+<PageTitle>Page d'Accueil</PageTitle>
+
+<h1>Bienvenue sur le dashboard (TP final)</h1>
+
+<h2 class="bg-black">Ce dashboard est une application web développée en C# avec ASP.NET Core et Blazor.</h2>
+
+Permet de visualiser des données en temps réel et de les analyser pour prendre des décisions éclairées.
+Bonne découverte de l'application ;)<br/>
+(crée par Sacha Duvivier & Théo Dadon) <br/><br/>
+
+
+<h3>Stack utilisée</h3>
+
+<ul>
+<li> <b>.NET 9</b> : Framework principal</li>
+<li> <b>Aspire</b> : Orchestration et observabilité</li>
+<li> <b>Blazor Server</b> : Interface utilisateur (SSR uniquement)</li>
+<li> <b>Entity Framework Core</b> : ORM</li>
+<li> <b>SQL Server</b> : Base de données</li>
+<li> <b>Keycloak</b> : Serveur d'authentification OIDC</li>
+<li> <b>JWT Bearer</b> : Authentification API</li>
+<li> <b>OpenID Connect</b> : Authentification Blazor</li>
+</ul>
+
+<h3>Auth</h3>
+<ul>
+<li>
+1. <b>JWT Bearer</b> : L'API valide l'issuer, l'audience, la signature et la durée de vie des tokens
+</li>
+<li>
+2. <b>OIDC Flow</b> : Utilisation du flow Authorization Code avec PKCE
+</li>
+<li>
+3. <b>Refresh Token</b> : Renouvellement automatique des tokens sans redemander l'authentification
+</li>
+<li>
+4. <b>RBAC</b> : Contrôle d'accès basé sur les rôles (gestion des produits et commandes réservée aux administrateurs)
+</li>
+<li>
+5. <b>Token Handler</b> : Injection automatique du JWT dans toutes les requêtes vers l'API
+</li>
+<li>
+6. <b>HTTPS</b> : Désactivé en développement, à activer en production
+</li>
+</ul>

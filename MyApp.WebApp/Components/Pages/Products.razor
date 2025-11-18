@@ -1,0 +1,341 @@
+@page "/products"
+@using MyApp.WebApp.Clients
+@using MyApp.Persistence
+@inject IProductClient productClient
+@inject IOrderClient orderClient
+@rendermode InteractiveServer
+
+<PageTitle>Produits</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Produits</h1>
+    <div class="d-flex gap-2">
+        <AuthorizeView Roles="admin">
+            <Authorized>
+                <a href="/admin" class="btn btn-primary">
+                    <span class="bi bi-gear"></span> Gérer les produits
+                </a>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView>
+            <Authorized>
+                @if (cartItems.Count > 0)
+                {
+                    <button class="btn btn-success" @onclick="ShowCart">
+                        Panier (@cartItems.Sum(c => c.Value.Quantity)) - @GetCartTotal().ToString("C")
+                    </button>
+                }
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@if (products == null)
+{
+    <p>Chargement...</p>
+}
+else if (products.Count == 0)
+{
+    <div class="alert alert-info">
+        <h5>Aucun produit disponible pour le moment.</h5>
+        <AuthorizeView Roles="admin">
+            <Authorized>
+                <p>Vous pouvez ajouter des produits depuis la page <a href="/admin" class="alert-link">Administration</a>.</p>
+            </Authorized>
+            <NotAuthorized>
+                <p>Connectez-vous en tant qu'administrateur pour ajouter des produits.</p>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+}
+else
+{
+    <div class="products-container">
+        @foreach (var product in products)
+        {
+            <div class="product-card">
+                <div class="product-media">
+                    <div class="product-main-img">
+                        <span class="top-right">@product.Price.ToString("F2") <span>€</span></span>
+
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl" alt="@product.Name" onerror="this.style.display='none'">
+                        }
+                        else
+                        {
+                            <div class="no-image">Pas d'image</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="product-content">
+                    <h1 class="product-title">@product.Name</h1>
+
+                    <p class="product-description">@product.Description</p>
+
+                    <p class="product-stock @(product.Stock > 0 ? "in-stock" : "out-of-stock")">
+                        @if (product.Stock > 0)
+                        {
+                            <text>En stock: @product.Stock unités</text>
+                        }
+                        else
+                        {
+                            <text>Rupture de stock</text>
+                        }
+                    </p>
+
+                    <AuthorizeView>
+                        <Authorized>
+                            @if (product.Stock > 0)
+                            {
+                                <div class="product-quantity-group">
+                                    <input type="number"
+                                           class="product-quantity-input"
+                                           min="1"
+                                           max="@product.Stock"
+                                           @bind="quantities[product.Id]"
+                                           @bind:event="onchange" />
+                                    <button class="btn-add" @onclick="() => AddToCart(product)">
+                                        Ajouter au panier
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="btn-add" disabled>Rupture de stock</button>
+                            }
+                        </Authorized>
+                        <NotAuthorized>
+                            <a href="/login" class="btn-login">
+                                Connectez-vous pour commander
+                            </a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showCart)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Panier</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCart"></button>
+                </div>
+                <div class="modal-body">
+                    @if (cartItems.Count == 0)
+                    {
+                        <p>Votre panier est vide.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group mb-3">
+                            @foreach (var item in cartItems.Values)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                        {
+                                            <img src="@item.Product.ImageUrl" alt="@item.Product.Name" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">
+                                        }
+                                        <div>
+                                            <strong>@item.Product.Name</strong><br/>
+                                            <small>@item.Product.Price.ToString("C") x @item.Quantity</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span>@((item.Quantity * item.Product.Price).ToString("C"))</span>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveFromCart(item.Product.Id)">
+                                            ×
+                                        </button>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Total:</strong>
+                            <strong>@GetCartTotal().ToString("C")</strong>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Adresse de livraison *</strong></label>
+                            <textarea class="form-control" rows="3" @bind="deliveryAddress" placeholder="Entrez votre adresse complète de livraison"></textarea>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCart">Fermer</button>
+                    @if (cartItems.Count > 0)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="CreateOrder" disabled="@isCreatingOrder">
+                            @if (isCreatingOrder)
+                            {
+                                <span>Création...</span>
+                            }
+                            else
+                            {
+                                <span>Passer la commande</span>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success") alert-dismissible fade show mt-3" role="alert">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+@code {
+    private List<Product>? products = null;
+    private Dictionary<int, CartItem> cartItems = new();
+    private Dictionary<int, int> quantities = new();
+    private bool showCart = false;
+    private bool isCreatingOrder = false;
+    private string message = string.Empty;
+    private bool isError = false;
+    private string deliveryAddress = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProducts();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            products = await productClient.GetProductsAsync();
+            foreach (var product in products)
+            {
+                quantities[product.Id] = 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur lors du chargement des produits: {ex.Message}";
+            isError = true;
+            products = new List<Product>();
+        }
+    }
+
+    private void AddToCart(Product product)
+    {
+        var quantity = quantities.GetValueOrDefault(product.Id, 1);
+        if (quantity <= 0 || quantity > product.Stock)
+        {
+            message = "Quantité invalide";
+            isError = true;
+            StateHasChanged();
+            return;
+        }
+
+        if (cartItems.ContainsKey(product.Id))
+        {
+            cartItems[product.Id].Quantity += quantity;
+        }
+        else
+        {
+            cartItems[product.Id] = new CartItem { Product = product, Quantity = quantity };
+        }
+
+        message = $"Produit '{product.Name}' ajouté au panier!";
+        isError = false;
+        StateHasChanged();
+    }
+
+    private void RemoveFromCart(int productId)
+    {
+        cartItems.Remove(productId);
+        StateHasChanged();
+    }
+
+    private void ShowCart()
+    {
+        showCart = true;
+        StateHasChanged();
+    }
+
+    private void CloseCart()
+    {
+        showCart = false;
+        deliveryAddress = string.Empty;
+        StateHasChanged();
+    }
+
+    private decimal GetCartTotal()
+    {
+        return cartItems.Values.Sum(item => item.Product.Price * item.Quantity);
+    }
+
+    private async Task CreateOrder()
+    {
+        if (cartItems.Count == 0)
+        {
+            message = "Votre panier est vide.";
+            isError = true;
+            StateHasChanged();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(deliveryAddress))
+        {
+            message = "Veuillez entrer une adresse de livraison.";
+            isError = true;
+            StateHasChanged();
+            return;
+        }
+
+        isCreatingOrder = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new CreateOrderRequest(
+                cartItems.Values.Select(item =>
+                    new CreateOrderItemRequest(item.Product.Id, item.Quantity)
+                ).ToList(),
+                deliveryAddress.Trim()
+            );
+
+            var order = await orderClient.CreateOrderAsync(request);
+            message = $"Commande créée avec succès! ID: {order.Id}";
+            isError = false;
+            cartItems.Clear();
+            deliveryAddress = string.Empty;
+            showCart = false;
+            await LoadProducts(); // Recharger pour mettre à jour les stocks
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur lors de la création de la commande: {ex.Message}";
+            isError = true;
+        }
+        finally
+        {
+            isCreatingOrder = false;
+            StateHasChanged();
+        }
+    }
+
+    private class CartItem
+    {
+        public Product Product { get; set; } = null!;
+        public int Quantity { get; set; }
+    }
+}

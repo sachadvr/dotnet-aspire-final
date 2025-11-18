@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "ChRL+7MK74MoY98yWReoYpLVPkd9laBL4A2xez13d6M=",
+  "Source": "MyApp.ApiService",
+  "BasePath": "_content/MyApp.ApiService",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

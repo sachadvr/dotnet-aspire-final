@@ -1,0 +1,539 @@
+@page "/admin"
+@using MyApp.WebApp.Clients
+@using MyApp.Persistence
+@using Microsoft.AspNetCore.Authorization
+@using System.Linq
+@attribute [Authorize(Roles = "admin")]
+@inject IAdminClient adminClient
+@rendermode InteractiveServer
+
+<PageTitle>Administration</PageTitle>
+
+<h1>Administration</h1>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <button class="nav-link @(activeTab == "products" ? "active" : "")" @onclick='() => SetActiveTab("products")'>
+            Produits
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link @(activeTab == "orders" ? "active" : "")" @onclick='() => SetActiveTab("orders")'>
+            Commandes
+        </button>
+    </li>
+</ul>
+
+@if (activeTab == "products")
+{
+    <div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Gestion des Produits</h3>
+            <button class="btn btn-primary" @onclick="ShowAddProductModal">
+                <span class="bi bi-plus-circle"></span> Ajouter un produit
+            </button>
+        </div>
+        
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <span class="bi bi-search"></span>
+                </span>
+                <input type="text" class="form-control" placeholder="Rechercher un produit (nom, description)..." 
+                       @bind="productSearchQuery" @bind:event="oninput" />
+                @if (!string.IsNullOrEmpty(productSearchQuery))
+                {
+                    <button class="btn btn-outline-secondary" type="button" @onclick="ClearSearch">
+                        <span class="bi bi-x"></span>
+                    </button>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(productSearchQuery))
+            {
+                <small class="text-muted">@GetFilteredProductsCount() produit(s) trouvé(s)</small>
+            }
+        </div>
+        
+        @if (products == null)
+        {
+            <p>Chargement...</p>
+        }
+        else if (filteredProducts.Count == 0)
+        {
+            <div class="alert alert-info">
+                @if (string.IsNullOrEmpty(productSearchQuery))
+                {
+                    <p class="mb-0">Aucun produit pour le moment.</p>
+                }
+                else
+                {
+                    <p class="mb-0">Aucun produit ne correspond à votre recherche "<strong>@productSearchQuery</strong>".</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var product in filteredProducts)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-img-top-container" style="height: 250px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" alt="@product.Name" 
+                                         class="card-img-top" style="object-fit: cover; width: 100%; height: 100%;" />
+                                }
+                                else
+                                {
+                                    <div class="text-muted">
+                                        <span class="bi bi-image" style="font-size: 3rem;"></span>
+                                        <p class="mt-2">Pas d'image</p>
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">ID: @product.Id</span>
+                                    @if (product.Stock <= 0)
+                                    {
+                                        <span class="badge bg-danger ms-1">Rupture de stock</span>
+                                    }
+                                    else if (product.Stock < 10)
+                                    {
+                                        <span class="badge bg-warning ms-1">Stock faible</span>
+                                    }
+                                </div>
+                                <h5 class="card-title">@product.Name</h5>
+                                @if (!string.IsNullOrEmpty(product.Description))
+                                {
+                                    <p class="card-text text-muted small flex-grow-1">@(product.Description.Length > 150 ? product.Description.Substring(0, 150) + "..." : product.Description)</p>
+                                }
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <strong class="text-primary h5 mb-0">@product.Price.ToString("C")</strong>
+                                        </div>
+                                        <div class="text-muted">
+                                            <small>Stock: <strong>@product.Stock</strong></small>
+                                        </div>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-warning btn-sm" @onclick="() => EditProduct(product)">
+                                            <span class="bi bi-pencil"></span> Modifier
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.Id)">
+                                            <span class="bi bi-trash"></span> Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else if (activeTab == "orders")
+{
+    <div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Gestion des Commandes</h3>
+            <div class="text-muted small">
+                <span class="bi bi-info-circle"></span> Toutes les commandes des utilisateurs
+            </div>
+        </div>
+        
+        @if (orders == null)
+        {
+            <p>Chargement...</p>
+        }
+        else if (orders.Count == 0)
+        {
+            <p>Aucune commande pour le moment.</p>
+        }
+        else
+        {
+            <div class="accordion" id="ordersAccordion">
+                @foreach (var order in orders)
+                {
+                    var orderId = order.Id;
+                    var isExpanded = expandedOrders.Contains(orderId);
+                    
+                    <div class="accordion-item mb-3 border rounded">
+                        <h2 class="accordion-header" id="heading-@orderId">
+                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" 
+                                    @onclick="() => ToggleOrder(orderId)"
+                                    aria-expanded="@isExpanded.ToString().ToLower()" 
+                                    aria-controls="collapse-@orderId">
+                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="fw-bold">Commande #@order.Id</span>
+                                        <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
+                                        <span class="text-muted">@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                        <span class="text-muted small">
+                                            @if (!string.IsNullOrEmpty(order.UserName))
+                                            {
+                                                <span>@order.UserName</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Utilisateur: @order.UserId</span>
+                                            }
+                                        </span>
+                                    </div>
+                                    <span class="h5 mb-0 text-primary">@order.TotalAmount.ToString("C")</span>
+                                </div>
+                            </button>
+                        </h2>
+                        @if (isExpanded)
+                        {
+                            <div id="collapse-@orderId" class="accordion-collapse collapse show" aria-labelledby="heading-@orderId">
+                                <div class="accordion-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p><strong>Date:</strong> @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                            <p><strong>Utilisateur:</strong> 
+                                                @if (!string.IsNullOrEmpty(order.UserName))
+                                                {
+                                                    <span>@order.UserName</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@order.UserId</span>
+                                                }
+                                            </p>
+                                            <p><strong>Statut:</strong> 
+                                                <select class="form-select form-select-sm d-inline-block w-auto ms-2" value="@order.Status.ToString()" 
+                                                        @onchange='(ChangeEventArgs e) => UpdateOrderStatus(order.Id, e.Value?.ToString() ?? "")'>
+                                                    @foreach (var status in Enum.GetValues<OrderStatus>())
+                                                    {
+                                                        <option value="@status.ToString()" selected="@(order.Status == status)">
+                                                            @status
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Montant Total:</strong> <span class="h5 text-primary">@order.TotalAmount.ToString("C")</span></p>
+                                            <p><strong>Adresse de livraison:</strong></p>
+                                            <p class="border p-2 bg-light">@(string.IsNullOrEmpty(order.Address) ? "Non renseignée" : order.Address)</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr/>
+                                    
+                                    <h6 class="mb-3">Produits commandés:</h6>
+                                    <div class="row g-3">
+                                        @foreach (var item in order.OrderItems)
+                                        {
+                                            <div class="col-md-6 col-lg-4">
+                                                <div class="card h-100">
+                                                    <div class="card-img-top-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                                        @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
+                                                        {
+                                                            <img src="@item.Product.ImageUrl" alt="@item.Product.Name" 
+                                                                 class="card-img-top" style="object-fit: cover; width: 100%; height: 100%;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="text-muted">
+                                                                <span class="bi bi-image" style="font-size: 3rem;"></span>
+                                                                <p class="mt-2">Pas d'image</p>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <h6 class="card-title">@item.Product.Name</h6>
+                                                        @if (!string.IsNullOrEmpty(item.Product.Description))
+                                                        {
+                                                            <p class="card-text small text-muted">@(item.Product.Description.Length > 100 ? item.Product.Description.Substring(0, 100) + "..." : item.Product.Description)</p>
+                                                        }
+                                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                                            <span class="text-muted">Quantité: <strong>@item.Quantity</strong></span>
+                                                            <span class="fw-bold">@item.UnitPrice.ToString("C")</span>
+                                                        </div>
+                                                        <div class="mt-2 pt-2 border-top">
+                                                            <small class="text-muted">Sous-total: </small>
+                                                            <strong class="text-primary">@((item.Quantity * item.UnitPrice).ToString("C"))</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@if (showProductModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(editingProduct?.Id > 0 ? "Modifier" : "Ajouter") un produit</h5>
+                    <button type="button" class="btn-close" @onclick="CloseProductModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input class="form-control" @bind="newProduct.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" @bind="newProduct.Description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prix</label>
+                        <input type="number" step="0.01" class="form-control" @bind="newProduct.Price" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock</label>
+                        <input type="number" class="form-control" @bind="newProduct.Stock" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL de l'image</label>
+                        <input type="url" class="form-control" @bind="newProduct.ImageUrl" placeholder="https://exemple.com/image.jpg" />
+                        <small class="form-text text-muted">Entrez l'URL complète de l'image du produit</small>
+                        @if (!string.IsNullOrEmpty(newProduct.ImageUrl))
+                        {
+                            <div class="mt-2">
+                                <img src="@newProduct.ImageUrl" alt="Aperçu" style="max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'">
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseProductModal">Annuler</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveProduct">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert @(isError ? "alert-danger" : "alert-success") alert-dismissible fade show mt-3" role="alert">
+        @message
+        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    </div>
+}
+
+@code {
+    private string activeTab = "products";
+    private List<Product>? products = null;
+    private List<Order>? orders = null;
+    private Product? editingProduct = null;
+    private Product newProduct = new();
+    private bool showProductModal = false;
+    private string message = string.Empty;
+    private bool isError = false;
+    private string productSearchQuery = string.Empty;
+    private HashSet<int> expandedOrders = new HashSet<int>();
+
+    private List<Product> filteredProducts
+    {
+        get
+        {
+            if (products == null) return new List<Product>();
+            
+            if (string.IsNullOrWhiteSpace(productSearchQuery))
+            {
+                return products;
+            }
+            
+            var query = productSearchQuery.ToLowerInvariant();
+            return products.Where(p => 
+                p.Name.ToLowerInvariant().Contains(query) ||
+                (!string.IsNullOrEmpty(p.Description) && p.Description.ToLowerInvariant().Contains(query))
+            ).ToList();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            if (activeTab == "products")
+            {
+                products = await adminClient.GetProductsAsync();
+            }
+            else if (activeTab == "orders")
+            {
+                orders = await adminClient.GetOrdersAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur lors du chargement: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private async Task SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        await LoadData();
+        StateHasChanged();
+    }
+
+    private void ShowAddProductModal()
+    {
+        editingProduct = null;
+        newProduct = new Product();
+        showProductModal = true;
+        StateHasChanged();
+    }
+
+    private void EditProduct(Product product)
+    {
+        editingProduct = product;
+        newProduct = new Product
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Stock = product.Stock,
+            ImageUrl = product.ImageUrl
+        };
+        showProductModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseProductModal()
+    {
+        showProductModal = false;
+        editingProduct = null;
+        newProduct = new Product();
+        StateHasChanged();
+    }
+
+    private async Task SaveProduct()
+    {
+        try
+        {
+            if (editingProduct?.Id > 0)
+            {
+                await adminClient.UpdateProductAsync(editingProduct.Id, newProduct);
+                message = "Produit modifié avec succès!";
+            }
+            else
+            {
+                await adminClient.CreateProductAsync(newProduct);
+                message = "Produit créé avec succès!";
+            }
+            isError = false;
+            CloseProductModal();
+            await LoadData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur: {ex.Message}";
+            isError = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        try
+        {
+            var success = await adminClient.DeleteProductAsync(id);
+            if (success)
+            {
+                message = "Produit supprimé avec succès!";
+                isError = false;
+                await LoadData();
+            }
+            else
+            {
+                message = "Erreur lors de la suppression du produit";
+                isError = true;
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur: {ex.Message}";
+            isError = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateOrderStatus(int orderId, string status)
+    {
+        try
+        {
+            await adminClient.UpdateOrderStatusAsync(orderId, status);
+            message = "Statut de la commande mis à jour!";
+            isError = false;
+            await LoadData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur: {ex.Message}";
+            isError = true;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleOrder(int orderId)
+    {
+        if (expandedOrders.Contains(orderId))
+        {
+            expandedOrders.Remove(orderId);
+        }
+        else
+        {
+            expandedOrders.Add(orderId);
+        }
+        StateHasChanged();
+    }
+
+    private string GetStatusBadgeClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Pending => "bg-warning",
+            OrderStatus.Confirmed => "bg-info",
+            OrderStatus.Shipped => "bg-primary",
+            OrderStatus.Delivered => "bg-success",
+            OrderStatus.Cancelled => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void ClearSearch()
+    {
+        productSearchQuery = string.Empty;
+        StateHasChanged();
+    }
+
+    private int GetFilteredProductsCount()
+    {
+        return filteredProducts.Count;
+    }
+}
