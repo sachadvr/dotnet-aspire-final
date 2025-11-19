@@ -249,6 +249,9 @@ var configureHandler = () =>
 builder.Services.AddHttpClient<IProductClient, ProductClient>(configureHttpClient)
     .ConfigurePrimaryHttpMessageHandler(configureHandler);
 
+builder.Services.AddHttpClient<ICategoryClient, CategoryClient>(configureHttpClient)
+    .ConfigurePrimaryHttpMessageHandler(configureHandler);
+
 builder.Services.AddHttpClient<IOrderClient, OrderClient>(configureHttpClient)
     .ConfigurePrimaryHttpMessageHandler(configureHandler)
     .AddHttpMessageHandler<MyApp.WebApp.Auth.TokenHandler>();

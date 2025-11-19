@@ -112,4 +112,65 @@ public class AdminClient(HttpClient httpClient) : IAdminClient
             throw;
         }
     }
+
+    // Catégories
+    public async Task<List<Category>> GetCategoriesAsync()
+    {
+        try
+        {
+            var result = await httpClient.GetFromJsonAsync<List<Category>>("/api/admin/categories") ?? new List<Category>();
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AdminClient] GET /api/admin/categories - Error: {ex.GetType().Name} - {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<Category> CreateCategoryAsync(Category category)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("/api/admin/categories", category);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<Category>() 
+                ?? throw new InvalidOperationException("Réponse invalide du serveur");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AdminClient] POST /api/admin/categories - Error: {ex.GetType().Name} - {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<Category> UpdateCategoryAsync(int id, Category category)
+    {
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync($"/api/admin/categories/{id}", category);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<Category>() 
+                ?? throw new InvalidOperationException("Réponse invalide du serveur");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AdminClient] PUT /api/admin/categories/{id} - Error: {ex.GetType().Name} - {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteCategoryAsync(int id)
+    {
+        try
+        {
+            var response = await httpClient.DeleteAsync($"/api/admin/categories/{id}");
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AdminClient] DELETE /api/admin/categories/{id} - Error: {ex.GetType().Name} - {ex.Message}");
+            throw;
+        }
+    }
 }

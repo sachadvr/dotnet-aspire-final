@@ -12,4 +12,9 @@ public interface IAdminClient
     Task<List<Order>> GetOrdersAsync();
     Task<Order> UpdateOrderStatusAsync(int id, string status);
     Task<Order> GeneratePaymentLinkAsync(int id, string paymentLink);
+    
+    Task<List<Category>> GetCategoriesAsync();
+    Task<Category> CreateCategoryAsync(Category category);
+    Task<Category> UpdateCategoryAsync(int id, Category category);
+    Task<bool> DeleteCategoryAsync(int id);
 }

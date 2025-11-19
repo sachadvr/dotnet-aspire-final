@@ -26,3 +26,7 @@ Cette application est une plateforme e-commerce complète qui permet :
   - Modifier le statut des commandes (Pending, Confirmed, Shipped, Delivered, Cancelled)
   - Générer des liens de paiement personnalisés pour chaque commande
   - Consulter les devis détaillés avec tous les articles
+
+## Documentation technique
+
+- **[Diagramme de classes de la base de données](./class-diagram.md)** - Visualisation des entités et relations du modèle de données

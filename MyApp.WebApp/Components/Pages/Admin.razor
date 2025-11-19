@@ -5,6 +5,7 @@
 @using System.Linq
 @attribute [Authorize(Roles = "admin")]
 @inject IAdminClient adminClient
+@inject ICategoryClient categoryClient
 @rendermode InteractiveServer
 
 <PageTitle>Administration</PageTitle>
@@ -15,6 +16,11 @@
     <li class="nav-item">
         <button class="nav-link @(activeTab == "products" ? "active" : "")" @onclick='() => SetActiveTab("products")'>
             Produits
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link @(activeTab == "categories" ? "active" : "")" @onclick='() => SetActiveTab("categories")'>
+            Catégories
         </button>
     </li>
     <li class="nav-item">
@@ -95,6 +101,10 @@
                             <div class="card-body d-flex flex-column">
                                 <div class="mb-2">
                                     <span class="badge bg-secondary">ID: @product.Id</span>
+                                    @if (product.Category != null)
+                                    {
+                                        <span class="badge bg-info ms-1">@product.Category.Name</span>
+                                    }
                                     @if (product.Stock <= 0)
                                     {
                                         <span class="badge bg-danger ms-1">Rupture de stock</span>
@@ -123,6 +133,95 @@
                                             <span class="bi bi-pencil"></span> Modifier
                                         </button>
                                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.Id)">
+                                            <span class="bi bi-trash"></span> Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else if (activeTab == "categories")
+{
+    <div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Gestion des Catégories</h3>
+            <button class="btn btn-primary" @onclick="ShowAddCategoryModal">
+                <span class="bi bi-plus-circle"></span> Ajouter une catégorie
+            </button>
+        </div>
+        
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <span class="bi bi-search"></span>
+                </span>
+                <input type="text" class="form-control" placeholder="Rechercher une catégorie (nom, description)..." 
+                       @bind="categorySearchQuery" @bind:event="oninput" />
+                @if (!string.IsNullOrEmpty(categorySearchQuery))
+                {
+                    <button class="btn btn-outline-secondary" type="button" @onclick="ClearCategorySearch">
+                        <span class="bi bi-x"></span>
+                    </button>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(categorySearchQuery))
+            {
+                <small class="text-muted">@GetFilteredCategoriesCount() catégorie(s) trouvée(s)</small>
+            }
+        </div>
+        
+        @if (adminCategories == null)
+        {
+            <p>Chargement...</p>
+        }
+        else if (filteredCategories.Count == 0)
+        {
+            <div class="alert alert-info">
+                @if (string.IsNullOrEmpty(categorySearchQuery))
+                {
+                    <p class="mb-0">Aucune catégorie pour le moment.</p>
+                }
+                else
+                {
+                    <p class="mb-0">Aucune catégorie ne correspond à votre recherche "<strong>@categorySearchQuery</strong>".</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var category in filteredCategories)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">ID: @category.Id</span>
+                                    <span class="badge bg-info ms-1">@category.Products.Count produit(s)</span>
+                                </div>
+                                <h5 class="card-title">@category.Name</h5>
+                                @if (!string.IsNullOrEmpty(category.Description))
+                                {
+                                    <p class="card-text text-muted small flex-grow-1">@category.Description</p>
+                                }
+                                else
+                                {
+                                    <p class="card-text text-muted small flex-grow-1">Aucune description</p>
+                                }
+                                <div class="mt-auto">
+                                    <div class="text-muted small mb-3">
+                                        <small>Créée le: @category.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-warning btn-sm" @onclick="() => EditCategory(category)">
+                                            <span class="bi bi-pencil"></span> Modifier
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteCategory(category.Id)">
                                             <span class="bi bi-trash"></span> Supprimer
                                         </button>
                                     </div>
@@ -274,6 +373,35 @@ else if (activeTab == "orders")
     </div>
 }
 
+@if (showCategoryModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(editingCategory?.Id > 0 ? "Modifier" : "Ajouter") une catégorie</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCategoryModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom *</label>
+                        <input class="form-control" @bind="newCategory.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="3" @bind="newCategory.Description" placeholder="Description de la catégorie (optionnel)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">Annuler</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveCategory">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @if (showProductModal)
 {
     <div class="modal fade show" style="display: block;" tabindex="-1">
@@ -299,6 +427,19 @@ else if (activeTab == "orders")
                     <div class="mb-3">
                         <label class="form-label">Stock</label>
                         <input type="number" class="form-control" @bind="newProduct.Stock" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select class="form-select" @bind="selectedCategoryId" @bind:event="onchange">
+                            <option value="">Aucune catégorie</option>
+                            @if (categories != null)
+                            {
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            }
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">URL de l'image</label>
@@ -334,13 +475,20 @@ else if (activeTab == "orders")
     private string activeTab = "products";
     private List<Product>? products = null;
     private List<Order>? orders = null;
+    private List<Category>? categories = null;
+    private List<Category>? adminCategories = null;
     private Product? editingProduct = null;
     private Product newProduct = new();
+    private Category? editingCategory = null;
+    private Category newCategory = new();
     private bool showProductModal = false;
+    private bool showCategoryModal = false;
     private string message = string.Empty;
     private bool isError = false;
     private string productSearchQuery = string.Empty;
+    private string categorySearchQuery = string.Empty;
     private HashSet<int> expandedOrders = new HashSet<int>();
+    private string selectedCategoryId = string.Empty;
 
     private List<Product> filteredProducts
     {
@@ -361,6 +509,25 @@ else if (activeTab == "orders")
         }
     }
 
+    private List<Category> filteredCategories
+    {
+        get
+        {
+            if (adminCategories == null) return new List<Category>();
+            
+            if (string.IsNullOrWhiteSpace(categorySearchQuery))
+            {
+                return adminCategories;
+            }
+            
+            var query = categorySearchQuery.ToLowerInvariant();
+            return adminCategories.Where(c => 
+                c.Name.ToLowerInvariant().Contains(query) ||
+                (!string.IsNullOrEmpty(c.Description) && c.Description.ToLowerInvariant().Contains(query))
+            ).ToList();
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -377,6 +544,14 @@ else if (activeTab == "orders")
             if (activeTab == "products")
             {
                 products = await adminClient.GetProductsAsync();
+                if (categories == null)
+                {
+                    categories = await categoryClient.GetCategoriesAsync();
+                }
+            }
+            else if (activeTab == "categories")
+            {
+                adminCategories = await adminClient.GetCategoriesAsync();
             }
             else if (activeTab == "orders")
             {
@@ -397,15 +572,28 @@ else if (activeTab == "orders")
         StateHasChanged();
     }
 
-    private void ShowAddProductModal()
+    private async Task ShowAddProductModal()
     {
         editingProduct = null;
         newProduct = new Product();
+        selectedCategoryId = string.Empty;
+        if (categories == null)
+        {
+            try
+            {
+                categories = await categoryClient.GetCategoriesAsync();
+            }
+            catch (Exception ex)
+            {
+                message = $"Erreur lors du chargement des catégories: {ex.Message}";
+                isError = true;
+            }
+        }
         showProductModal = true;
         StateHasChanged();
     }
 
-    private void EditProduct(Product product)
+    private async Task EditProduct(Product product)
     {
         editingProduct = product;
         newProduct = new Product
@@ -415,8 +603,22 @@ else if (activeTab == "orders")
             Description = product.Description,
             Price = product.Price,
             Stock = product.Stock,
-            ImageUrl = product.ImageUrl
+            ImageUrl = product.ImageUrl,
+            CategoryId = product.CategoryId
         };
+        selectedCategoryId = product.CategoryId?.ToString() ?? string.Empty;
+        if (categories == null)
+        {
+            try
+            {
+                categories = await categoryClient.GetCategoriesAsync();
+            }
+            catch (Exception ex)
+            {
+                message = $"Erreur lors du chargement des catégories: {ex.Message}";
+                isError = true;
+            }
+        }
         showProductModal = true;
         StateHasChanged();
     }
@@ -426,6 +628,7 @@ else if (activeTab == "orders")
         showProductModal = false;
         editingProduct = null;
         newProduct = new Product();
+        selectedCategoryId = string.Empty;
         StateHasChanged();
     }
 
@@ -433,6 +636,11 @@ else if (activeTab == "orders")
     {
         try
         {
+            // Mettre à jour CategoryId depuis le select
+            newProduct.CategoryId = string.IsNullOrEmpty(selectedCategoryId) 
+                ? null 
+                : int.TryParse(selectedCategoryId, out var categoryId) ? categoryId : null;
+            
             if (editingProduct?.Id > 0)
             {
                 await adminClient.UpdateProductAsync(editingProduct.Id, newProduct);
@@ -535,5 +743,110 @@ else if (activeTab == "orders")
     private int GetFilteredProductsCount()
     {
         return filteredProducts.Count;
+    }
+
+    private void ClearCategorySearch()
+    {
+        categorySearchQuery = string.Empty;
+        StateHasChanged();
+    }
+
+    private int GetFilteredCategoriesCount()
+    {
+        return filteredCategories.Count;
+    }
+
+    private void ShowAddCategoryModal()
+    {
+        editingCategory = null;
+        newCategory = new Category();
+        showCategoryModal = true;
+        StateHasChanged();
+    }
+
+    private void EditCategory(Category category)
+    {
+        editingCategory = category;
+        newCategory = new Category
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description
+        };
+        showCategoryModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseCategoryModal()
+    {
+        showCategoryModal = false;
+        editingCategory = null;
+        newCategory = new Category();
+        StateHasChanged();
+    }
+
+    private async Task SaveCategory()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(newCategory.Name))
+            {
+                message = "Le nom de la catégorie est obligatoire";
+                isError = true;
+                StateHasChanged();
+                return;
+            }
+
+            if (editingCategory?.Id > 0)
+            {
+                await adminClient.UpdateCategoryAsync(editingCategory.Id, newCategory);
+                message = "Catégorie modifiée avec succès!";
+            }
+            else
+            {
+                await adminClient.CreateCategoryAsync(newCategory);
+                message = "Catégorie créée avec succès!";
+            }
+            isError = false;
+            CloseCategoryModal();
+            // Recharger les catégories pour le dropdown des produits aussi
+            categories = await categoryClient.GetCategoriesAsync();
+            await LoadData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur: {ex.Message}";
+            isError = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        try
+        {
+            var success = await adminClient.DeleteCategoryAsync(id);
+            if (success)
+            {
+                message = "Catégorie supprimée avec succès!";
+                isError = false;
+                // Recharger les catégories pour le dropdown des produits aussi
+                categories = await categoryClient.GetCategoriesAsync();
+                await LoadData();
+            }
+            else
+            {
+                message = "Erreur lors de la suppression de la catégorie";
+                isError = true;
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            message = $"Erreur: {ex.Message}";
+            isError = true;
+            StateHasChanged();
+        }
     }
 }
