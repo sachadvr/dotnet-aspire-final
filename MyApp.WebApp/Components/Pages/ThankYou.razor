@@ -1,0 +1,207 @@
+@page "/thank-you"
+@using MyApp.WebApp.Clients
+@using MyApp.Persistence
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.WebUtilities
+@inject IOrderClient orderClient
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Merci pour votre commande</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    @if (order == null && isLoading)
+                    {
+                        <div class="spinner-border text-primary mb-4" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p>Chargement des détails de votre commande...</p>
+                    }
+                    else if (order == null)
+                    {
+                        <div class="alert alert-warning">
+                            <h4 class="alert-heading">Commande introuvable</h4>
+                            <p>Nous n'avons pas pu trouver les détails de votre commande.</p>
+                            <hr>
+                            <a href="/products" class="btn btn-primary rounded-30">Retour aux produits</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-4">
+                            <div class="success-icon mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                </svg>
+                            </div>
+                            <h1 class="display-4 fw-bold text-success mb-3">Merci pour votre commande!</h1>
+                            <p class="lead text-muted">Votre commande a été enregistrée avec succès.</p>
+                        </div>
+
+                        <div class="card bg-light mb-4">
+                            <div class="card-body text-start">
+                                <h5 class="card-title mb-4">Détails de votre commande</h5>
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <strong>Numéro de commande:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="badge bg-primary fs-6">#@order.Id</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <strong>Date:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        @order.OrderDate.ToString("dd/MM/yyyy à HH:mm")
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <strong>Statut:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="badge bg-warning">@order.Status</span>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <strong>Montant total:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="h5 text-primary mb-0">@order.TotalAmount.ToString("C")</span>
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(order.Address))
+                                {
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <strong>Adresse de livraison:</strong>
+                                            <p class="mb-0 mt-1">@order.Address</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (order.OrderItems != null && order.OrderItems.Any())
+                        {
+                            <div class="mb-4">
+                                <h5 class="mb-3">Articles commandés:</h5>
+                                <div class="list-group">
+                                    @foreach (var item in order.OrderItems)
+                                    {
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>@item.Product.Name</strong>
+                                                    <br>
+                                                    <small class="text-muted">Quantité: @item.Quantity × @item.UnitPrice.ToString("C")</small>
+                                                </div>
+                                                <strong class="text-primary">@((item.Quantity * item.UnitPrice).ToString("C"))</strong>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                                </svg>
+                                Prochaines étapes
+                            </h6>
+                            <p class="mb-0">Vous recevrez un email de confirmation sous peu. Vous pouvez suivre l'état de votre commande dans la section <a href="/my-orders" class="alert-link">Mes Commandes</a>.</p>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="/products" class="btn btn-outline-primary btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                                </svg>
+                                Continuer vos achats
+                            </a>
+                            <a href="/my-orders" class="btn btn-primary rounded-30 btn-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list-check" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
+                                </svg>
+                                Voir mes commandes
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .success-icon {
+        animation: scaleIn 0.5s ease-out;
+    }
+
+    @@keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .card {
+        border-radius: 15px;
+    }
+
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+
+    .list-group-item:first-child {
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+    }
+
+    .list-group-item:last-child {
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+</style>
+
+@code {
+    private Order? order = null;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var orderIdParam = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query).TryGetValue("orderId", out var orderIdValue)
+            ? orderIdValue.ToString()
+            : null;
+
+        if (!string.IsNullOrEmpty(orderIdParam) && int.TryParse(orderIdParam, out var orderId))
+        {
+            try
+            {
+                order = await orderClient.GetOrderAsync(orderId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erreur lors du chargement de la commande: {ex.Message}");
+            }
+        }
+
+        isLoading = false;
+    }
+}

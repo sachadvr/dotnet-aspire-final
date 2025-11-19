@@ -33,3 +33,25 @@ msbuild.wrn
 
 # Visual Studio 2015
 .vs/
+
+MyApp.WebApp/bin
+MyApp.WebApp/obj
+
+# Build outputs
+bin/
+obj/
+
+# ASP.NET scoped css
+*.bundle.scp.css
+
+# Static web assets generated
+*.staticwebassets.*
+
+# Cache and temp files
+*.cache
+*.pdb
+*.dll
+
+# Razor generated
+*.g.cs
+*.rz.scp.css

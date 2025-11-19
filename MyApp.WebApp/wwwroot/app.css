@@ -58,3 +58,31 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.rounded-30 {
+  border-radius: 30px !important;
+}
+
+
+.btn-primary {
+    background-color: #8C00FF;
+    border-color: #8C00FF;
+}
+
+.btn-primary:hover {
+    background-color: #450693;
+    border-color: #450693;
+}
+
+.text-primary {
+    color: #8C00FF!important;
+}
+
+.bg-warning {
+    background: #333!important;
+    border-color: #333!important;
+}
+
+.nav-link {
+    color: #8C00FF;
+}

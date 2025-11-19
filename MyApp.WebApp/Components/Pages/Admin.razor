@@ -35,17 +35,19 @@
     <div>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3>Gestion des Produits</h3>
-            <button class="btn btn-primary" @onclick="ShowAddProductModal">
+            <button class="btn btn-primary rounded-30" @onclick="ShowAddProductModal">
                 <span class="bi bi-plus-circle"></span> Ajouter un produit
             </button>
         </div>
-        
+
         <div class="mb-3">
             <div class="input-group">
                 <span class="input-group-text">
-                    <span class="bi bi-search"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
                 </span>
-                <input type="text" class="form-control" placeholder="Rechercher un produit (nom, description)..." 
+                <input type="text" class="form-control" placeholder="Rechercher un produit (nom, description)..."
                        @bind="productSearchQuery" @bind:event="oninput" />
                 @if (!string.IsNullOrEmpty(productSearchQuery))
                 {
@@ -59,7 +61,7 @@
                 <small class="text-muted">@GetFilteredProductsCount() produit(s) trouvé(s)</small>
             }
         </div>
-        
+
         @if (products == null)
         {
             <p>Chargement...</p>
@@ -87,7 +89,7 @@
                             <div class="card-img-top-container" style="height: 250px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
                                 @if (!string.IsNullOrEmpty(product.ImageUrl))
                                 {
-                                    <img src="@product.ImageUrl" alt="@product.Name" 
+                                    <img src="@product.ImageUrl" alt="@product.Name"
                                          class="card-img-top" style="object-fit: cover; width: 100%; height: 100%;" />
                                 }
                                 else
@@ -129,10 +131,10 @@
                                         </div>
                                     </div>
                                     <div class="d-grid gap-2">
-                                        <button class="btn btn-warning btn-sm" @onclick="() => EditProduct(product)">
+                                        <button class="btn btn-sm rounded-30" @onclick="() => EditProduct(product)">
                                             <span class="bi bi-pencil"></span> Modifier
                                         </button>
-                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product.Id)">
+                                        <button class="btn btn-danger btn-sm rounded-30" @onclick="() => DeleteProduct(product.Id)">
                                             <span class="bi bi-trash"></span> Supprimer
                                         </button>
                                     </div>
@@ -150,17 +152,19 @@ else if (activeTab == "categories")
     <div>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3>Gestion des Catégories</h3>
-            <button class="btn btn-primary" @onclick="ShowAddCategoryModal">
+            <button class="btn btn-primary rounded-30" @onclick="ShowAddCategoryModal">
                 <span class="bi bi-plus-circle"></span> Ajouter une catégorie
             </button>
         </div>
-        
+
         <div class="mb-3">
             <div class="input-group">
                 <span class="input-group-text">
-                    <span class="bi bi-search"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
                 </span>
-                <input type="text" class="form-control" placeholder="Rechercher une catégorie (nom, description)..." 
+                <input type="text" class="form-control" placeholder="Rechercher une catégorie (nom, description)..."
                        @bind="categorySearchQuery" @bind:event="oninput" />
                 @if (!string.IsNullOrEmpty(categorySearchQuery))
                 {
@@ -174,7 +178,7 @@ else if (activeTab == "categories")
                 <small class="text-muted">@GetFilteredCategoriesCount() catégorie(s) trouvée(s)</small>
             }
         </div>
-        
+
         @if (adminCategories == null)
         {
             <p>Chargement...</p>
@@ -218,10 +222,10 @@ else if (activeTab == "categories")
                                         <small>Créée le: @category.CreatedAt.ToString("dd/MM/yyyy HH:mm")</small>
                                     </div>
                                     <div class="d-grid gap-2">
-                                        <button class="btn btn-warning btn-sm" @onclick="() => EditCategory(category)">
+                                        <button class="btn btn-sm rounded-30" @onclick="() => EditCategory(category)">
                                             <span class="bi bi-pencil"></span> Modifier
                                         </button>
-                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteCategory(category.Id)">
+                                        <button class="btn btn-danger btn-sm rounded-30" @onclick="() => DeleteCategory(category.Id)">
                                             <span class="bi bi-trash"></span> Supprimer
                                         </button>
                                     </div>
@@ -243,7 +247,7 @@ else if (activeTab == "orders")
                 <span class="bi bi-info-circle"></span> Toutes les commandes des utilisateurs
             </div>
         </div>
-        
+
         @if (orders == null)
         {
             <p>Chargement...</p>
@@ -259,12 +263,12 @@ else if (activeTab == "orders")
                 {
                     var orderId = order.Id;
                     var isExpanded = expandedOrders.Contains(orderId);
-                    
+
                     <div class="accordion-item mb-3 border rounded">
                         <h2 class="accordion-header" id="heading-@orderId">
-                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button" 
+                            <button class="accordion-button @(isExpanded ? "" : "collapsed")" type="button"
                                     @onclick="() => ToggleOrder(orderId)"
-                                    aria-expanded="@isExpanded.ToString().ToLower()" 
+                                    aria-expanded="@isExpanded.ToString().ToLower()"
                                     aria-controls="collapse-@orderId">
                                 <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                     <div class="d-flex align-items-center gap-3">
@@ -293,7 +297,7 @@ else if (activeTab == "orders")
                                     <div class="row mb-3">
                                         <div class="col-md-6">
                                             <p><strong>Date:</strong> @order.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
-                                            <p><strong>Utilisateur:</strong> 
+                                            <p><strong>Utilisateur:</strong>
                                                 @if (!string.IsNullOrEmpty(order.UserName))
                                                 {
                                                     <span>@order.UserName</span>
@@ -303,8 +307,8 @@ else if (activeTab == "orders")
                                                     <span>@order.UserId</span>
                                                 }
                                             </p>
-                                            <p><strong>Statut:</strong> 
-                                                <select class="form-select form-select-sm d-inline-block w-auto ms-2" value="@order.Status.ToString()" 
+                                            <p><strong>Statut:</strong>
+                                                <select class="form-select form-select-sm d-inline-block w-auto ms-2" value="@order.Status.ToString()"
                                                         @onchange='(ChangeEventArgs e) => UpdateOrderStatus(order.Id, e.Value?.ToString() ?? "")'>
                                                     @foreach (var status in Enum.GetValues<OrderStatus>())
                                                     {
@@ -321,9 +325,9 @@ else if (activeTab == "orders")
                                             <p class="border p-2 bg-light">@(string.IsNullOrEmpty(order.Address) ? "Non renseignée" : order.Address)</p>
                                         </div>
                                     </div>
-                                    
+
                                     <hr/>
-                                    
+
                                     <h6 class="mb-3">Produits commandés:</h6>
                                     <div class="row g-3">
                                         @foreach (var item in order.OrderItems)
@@ -333,7 +337,7 @@ else if (activeTab == "orders")
                                                     <div class="card-img-top-container" style="height: 200px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
                                                         @if (!string.IsNullOrEmpty(item.Product.ImageUrl))
                                                         {
-                                                            <img src="@item.Product.ImageUrl" alt="@item.Product.Name" 
+                                                            <img src="@item.Product.ImageUrl" alt="@item.Product.Name"
                                                                  class="card-img-top" style="object-fit: cover; width: 100%; height: 100%;" />
                                                         }
                                                         else
@@ -393,8 +397,8 @@ else if (activeTab == "orders")
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">Annuler</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveCategory">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary rounded-30" @onclick="CloseCategoryModal">Annuler</button>
+                    <button type="button" class="btn btn-primary rounded-30" @onclick="SaveCategory">Enregistrer</button>
                 </div>
             </div>
         </div>
@@ -454,8 +458,8 @@ else if (activeTab == "orders")
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseProductModal">Annuler</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveProduct">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary rounded-30" @onclick="CloseProductModal">Annuler</button>
+                    <button type="button" class="btn btn-primary rounded-30" @onclick="SaveProduct">Enregistrer</button>
                 </div>
             </div>
         </div>
@@ -495,14 +499,14 @@ else if (activeTab == "orders")
         get
         {
             if (products == null) return new List<Product>();
-            
+
             if (string.IsNullOrWhiteSpace(productSearchQuery))
             {
                 return products;
             }
-            
+
             var query = productSearchQuery.ToLowerInvariant();
-            return products.Where(p => 
+            return products.Where(p =>
                 p.Name.ToLowerInvariant().Contains(query) ||
                 (!string.IsNullOrEmpty(p.Description) && p.Description.ToLowerInvariant().Contains(query))
             ).ToList();
@@ -514,14 +518,14 @@ else if (activeTab == "orders")
         get
         {
             if (adminCategories == null) return new List<Category>();
-            
+
             if (string.IsNullOrWhiteSpace(categorySearchQuery))
             {
                 return adminCategories;
             }
-            
+
             var query = categorySearchQuery.ToLowerInvariant();
-            return adminCategories.Where(c => 
+            return adminCategories.Where(c =>
                 c.Name.ToLowerInvariant().Contains(query) ||
                 (!string.IsNullOrEmpty(c.Description) && c.Description.ToLowerInvariant().Contains(query))
             ).ToList();
@@ -637,10 +641,10 @@ else if (activeTab == "orders")
         try
         {
             // Mettre à jour CategoryId depuis le select
-            newProduct.CategoryId = string.IsNullOrEmpty(selectedCategoryId) 
-                ? null 
+            newProduct.CategoryId = string.IsNullOrEmpty(selectedCategoryId)
+                ? null
                 : int.TryParse(selectedCategoryId, out var categoryId) ? categoryId : null;
-            
+
             if (editingProduct?.Id > 0)
             {
                 await adminClient.UpdateProductAsync(editingProduct.Id, newProduct);

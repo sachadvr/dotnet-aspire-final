@@ -31,7 +31,7 @@
 
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="my-orders">
-                        <span class="bi bi-cart-check-nav-menu" aria-hidden="true"></span> 
+                        <span class="bi bi-cart-check-nav-menu" aria-hidden="true"></span>
                         <AuthorizeView Roles="admin" Context="adminRoleContext">
                             <Authorized Context="adminRoleContext">Commandes</Authorized>
                             <NotAuthorized Context="adminRoleContext">Mes Commandes</NotAuthorized>
@@ -65,7 +65,7 @@
                     <form id="logoutForm" action="/logout" method="post" style="display: none;">
                         <AntiforgeryToken />
                     </form>
-                    <button type="button" class="btn btn-sm btn-outline-light w-100" @onclick="HandleLogout" @onclick:preventDefault="true" disabled="@isLoggingOut">
+                    <button type="button" class="btn btn-sm rounded-30 btn-outline-light w-100" @onclick="HandleLogout" @onclick:preventDefault="true" disabled="@isLoggingOut">
                         @if (isLoggingOut)
                         {
                             <span>Déconnexion...</span>
@@ -79,7 +79,7 @@
             </Authorized>
             <NotAuthorized>
                 <div class="nav-item px-3 mt-4 pt-4" style="border-top: 1px solid rgba(255,255,255,0.2);">
-                    <a href="/login" class="btn btn-sm btn-outline-light w-100">
+                    <a href="/login" class="btn btn-sm rounded-30 btn-outline-light w-100">
                        Connexion
                     </a>
                 </div>

@@ -1,8 +1,10 @@
 @page "/products"
 @using MyApp.WebApp.Clients
 @using MyApp.Persistence
+@using Microsoft.AspNetCore.Components
 @inject IProductClient productClient
 @inject IOrderClient orderClient
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <PageTitle>Produits</PageTitle>
@@ -12,7 +14,7 @@
     <div class="d-flex gap-2">
         <AuthorizeView Roles="admin">
             <Authorized>
-                <a href="/admin" class="btn btn-primary">
+                <a href="/admin" class="btn btn-primary rounded-30">
                     <span class="bi bi-gear"></span> Gérer les produits
                 </a>
             </Authorized>
@@ -29,6 +31,31 @@
         </AuthorizeView>
     </div>
 </div>
+
+@if (products != null && products.Count > 0)
+{
+    <div class="mb-3">
+        <div class="input-group">
+            <span class="input-group-text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+            </span>
+            <input type="text" class="form-control" placeholder="Rechercher un produit (nom, description)..."
+                   @bind="searchQuery" @bind:event="oninput" />
+            @if (!string.IsNullOrEmpty(searchQuery))
+            {
+                <button class="btn btn-outline-secondary" type="button" @onclick="ClearSearch">
+                    <span class="bi bi-x"></span>
+                </button>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(searchQuery))
+        {
+            <small class="text-muted">@GetFilteredProductsCount() produit(s) trouvé(s)</small>
+        }
+    </div>
+}
 
 @if (products == null)
 {
@@ -48,10 +75,23 @@ else if (products.Count == 0)
         </AuthorizeView>
     </div>
 }
+else if (filteredProducts.Count == 0)
+{
+    <div class="alert alert-info">
+        @if (string.IsNullOrEmpty(searchQuery))
+        {
+            <h5>Aucun produit disponible pour le moment.</h5>
+        }
+        else
+        {
+            <p class="mb-0">Aucun produit ne correspond à votre recherche "<strong>@searchQuery</strong>".</p>
+        }
+    </div>
+}
 else
 {
     <div class="products-container">
-        @foreach (var product in products)
+        @foreach (var product in filteredProducts)
         {
             <div class="product-card">
                 <div class="product-media">
@@ -71,7 +111,7 @@ else
 
                 <div class="product-content">
                     <h1 class="product-title">@product.Name</h1>
-                    
+
                     @if (product.Category != null)
                     {
                         <div class="product-category mb-2">
@@ -157,7 +197,7 @@ else
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         <span>@((item.Quantity * item.Product.Price).ToString("C"))</span>
-                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveFromCart(item.Product.Id)">
+                                        <button class="btn btn-sm btn-danger rounded-30" @onclick="() => RemoveFromCart(item.Product.Id)">
                                             ×
                                         </button>
                                     </div>
@@ -170,15 +210,28 @@ else
                         </div>
                         <div class="mb-3">
                             <label class="form-label"><strong>Adresse de livraison *</strong></label>
-                            <textarea class="form-control" rows="3" @bind="deliveryAddress" placeholder="Entrez votre adresse complète de livraison"></textarea>
+                            <textarea class="form-control @(cartErrorMessage != null && cartErrorMessage.Contains("adresse") ? "is-invalid" : "")" rows="3" @bind="deliveryAddress" placeholder="Entrez votre adresse complète de livraison"></textarea>
+                            @if (cartErrorMessage != null && cartErrorMessage.Contains("adresse"))
+                            {
+                                <div class="invalid-feedback d-block">
+                                    @cartErrorMessage
+                                </div>
+                            }
                         </div>
+                        @if (!string.IsNullOrEmpty(cartErrorMessage) && !cartErrorMessage.Contains("adresse"))
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                @cartErrorMessage
+                                <button type="button" class="btn-close" @onclick="() => cartErrorMessage = string.Empty"></button>
+                            </div>
+                        }
                     }
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseCart">Fermer</button>
                     @if (cartItems.Count > 0)
                     {
-                        <button type="button" class="btn btn-primary" @onclick="CreateOrder" disabled="@isCreatingOrder">
+                        <button type="button" class="btn btn-primary rounded-30" @onclick="CreateOrder" disabled="@isCreatingOrder">
                             @if (isCreatingOrder)
                             {
                                 <span>Création...</span>
@@ -196,12 +249,27 @@ else
     <div class="modal-backdrop fade show"></div>
 }
 
-@if (!string.IsNullOrEmpty(message))
+@if (showAddToCartModal)
 {
-    <div class="alert @(isError ? "alert-danger" : "alert-success") alert-dismissible fade show mt-3" role="alert">
-        @message
-        <button type="button" class="btn-close" @onclick="() => message = string.Empty"></button>
+    <div class="modal fade show add-to-cart-modal" style="display: block;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content add-to-cart-modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="success-icon mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-check-circle-fill text-success" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                        </svg>
+                    </div>
+                    <h5 class="mb-2">Produit ajouté au panier !</h5>
+                    @if (lastAddedProduct != null)
+                    {
+                        <p class="text-muted mb-0">@lastAddedProduct.Name</p>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
+    <div class="modal-backdrop fade show"></div>
 }
 
 @code {
@@ -210,9 +278,12 @@ else
     private Dictionary<int, int> quantities = new();
     private bool showCart = false;
     private bool isCreatingOrder = false;
-    private string message = string.Empty;
     private bool isError = false;
     private string deliveryAddress = string.Empty;
+    private string? cartErrorMessage = null;
+    private string searchQuery = string.Empty;
+    private bool showAddToCartModal = false;
+    private Product? lastAddedProduct = null;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -235,18 +306,16 @@ else
         }
         catch (Exception ex)
         {
-            message = $"Erreur lors du chargement des produits: {ex.Message}";
             isError = true;
             products = new List<Product>();
         }
     }
 
-    private void AddToCart(Product product)
+    private async Task AddToCart(Product product)
     {
         var quantity = quantities.GetValueOrDefault(product.Id, 1);
         if (quantity <= 0 || quantity > product.Stock)
         {
-            message = "Quantité invalide";
             isError = true;
             StateHasChanged();
             return;
@@ -261,8 +330,16 @@ else
             cartItems[product.Id] = new CartItem { Product = product, Quantity = quantity };
         }
 
-        message = $"Produit '{product.Name}' ajouté au panier!";
+        // Afficher la modal d'animation
+        lastAddedProduct = product;
+        showAddToCartModal = true;
         isError = false;
+        StateHasChanged();
+
+        // Fermer automatiquement la modal après 1.5 secondes
+        await Task.Delay(1500);
+        showAddToCartModal = false;
+        lastAddedProduct = null;
         StateHasChanged();
     }
 
@@ -275,6 +352,7 @@ else
     private void ShowCart()
     {
         showCart = true;
+        cartErrorMessage = null;
         StateHasChanged();
     }
 
@@ -282,6 +360,7 @@ else
     {
         showCart = false;
         deliveryAddress = string.Empty;
+        cartErrorMessage = null;
         StateHasChanged();
     }
 
@@ -292,23 +371,24 @@ else
 
     private async Task CreateOrder()
     {
+        cartErrorMessage = null;
+
         if (cartItems.Count == 0)
         {
-            message = "Votre panier est vide.";
-            isError = true;
+            cartErrorMessage = "Votre panier est vide.";
             StateHasChanged();
             return;
         }
 
         if (string.IsNullOrWhiteSpace(deliveryAddress))
         {
-            message = "Veuillez entrer une adresse de livraison.";
-            isError = true;
+            cartErrorMessage = "Veuillez entrer une adresse de livraison.";
             StateHasChanged();
             return;
         }
 
         isCreatingOrder = true;
+        cartErrorMessage = null;
         StateHasChanged();
 
         try
@@ -321,23 +401,55 @@ else
             );
 
             var order = await orderClient.CreateOrderAsync(request);
-            message = $"Commande créée avec succès! ID: {order.Id}";
-            isError = false;
             cartItems.Clear();
             deliveryAddress = string.Empty;
+            cartErrorMessage = null;
             showCart = false;
             await LoadProducts(); // Recharger pour mettre à jour les stocks
+
+            // Rediriger vers la page de remerciement
+            Navigation.NavigateTo($"/thank-you?orderId={order.Id}");
         }
         catch (Exception ex)
         {
-            message = $"Erreur lors de la création de la commande: {ex.Message}";
-            isError = true;
+            cartErrorMessage = $"Erreur lors de la création de la commande: {ex.Message}";
         }
         finally
         {
             isCreatingOrder = false;
             StateHasChanged();
         }
+    }
+
+    private List<Product> filteredProducts
+    {
+        get
+        {
+            if (products == null) return new List<Product>();
+
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return products;
+            }
+
+            var query = searchQuery.ToLowerInvariant();
+            return products.Where(p =>
+                p.Name.ToLowerInvariant().Contains(query) ||
+                (!string.IsNullOrEmpty(p.Description) && p.Description.ToLowerInvariant().Contains(query)) ||
+                (p.Category != null && !string.IsNullOrEmpty(p.Category.Name) && p.Category.Name.ToLowerInvariant().Contains(query))
+            ).ToList();
+        }
+    }
+
+    private int GetFilteredProductsCount()
+    {
+        return filteredProducts.Count;
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = string.Empty;
+        StateHasChanged();
     }
 
     private class CartItem
