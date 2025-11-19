@@ -29,4 +29,7 @@ Cette application est une plateforme e-commerce complète qui permet :
 
 ## Documentation technique
 
-- **[Diagramme de classes de la base de données](./class-diagram.md)** - Visualisation des entités et relations du modèle de données
+- **[Diagramme de classes de la base de données](./class-diagram.md)** -
+- **[Swagger](http://localhost:5264/swagger/index.html)** - Documentation des API exposées par l'application
+
+Visualisation des entités et relations du modèle de données
