@@ -3,6 +3,8 @@
 > **Projet réalisé par** : Sacha Duvivier & Théo Dadon  
 > **Contexte** : TP Final - Application web moderne avec architecture microservices
 
+![screenshot](./screenshot.png)
+
 Bienvenue dans notre application e-commerce ! Ce projet a été développé dans le cadre du TP final pour mettre en pratique les technologies modernes du stack .NET. 
 
 L'application permet de gérer un catalogue de produits, un système de panier, des commandes avec adresses de livraison, et un système de génération de liens de paiement
