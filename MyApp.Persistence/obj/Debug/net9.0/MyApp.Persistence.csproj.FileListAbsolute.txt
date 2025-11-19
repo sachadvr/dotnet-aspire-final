@@ -12,3 +12,4 @@
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.pdb
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.genruntimeconfig.cache
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/ref/MyApp.Persistence.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.Persistence/obj/Debug/net9.0/MyApp.Persistence.sourcelink.json

@@ -211,3 +211,4 @@
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.ApiService/obj/Debug/net9.0/MyApp.ApiService.pdb
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.ApiService/obj/Debug/net9.0/MyApp.ApiService.genruntimeconfig.cache
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.ApiService/obj/Debug/net9.0/ref/MyApp.ApiService.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ApiService/obj/Debug/net9.0/MyApp.ApiService.sourcelink.json

@@ -10,3 +10,4 @@
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/refint/MyApp.ServiceDefaults.dll
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.pdb
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/ref/MyApp.ServiceDefaults.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.ServiceDefaults/obj/Debug/net9.0/MyApp.ServiceDefaults.sourcelink.json

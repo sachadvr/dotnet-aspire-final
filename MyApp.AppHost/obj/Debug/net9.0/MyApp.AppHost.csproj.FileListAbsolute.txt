@@ -174,3 +174,4 @@
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.AppHost/obj/Debug/net9.0/MyApp.AppHost.pdb
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.AppHost/obj/Debug/net9.0/MyApp.AppHost.genruntimeconfig.cache
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.AppHost/obj/Debug/net9.0/ref/MyApp.AppHost.dll
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.AppHost/obj/Debug/net9.0/MyApp.AppHost.sourcelink.json

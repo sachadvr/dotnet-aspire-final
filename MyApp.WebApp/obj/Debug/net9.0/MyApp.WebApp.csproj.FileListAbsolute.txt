@@ -170,3 +170,4 @@
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.WebApp/obj/Debug/net9.0/ref/MyApp.WebApp.dll
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.WebApp/obj/Debug/net9.0/compressed/03lvle90e9-ev6uor5cmr.gz
 /Users/sduvivier/Development/FinalTP/MyApp/MyApp.WebApp/obj/Debug/net9.0/compressed/tcgi25rffd-ev6uor5cmr.gz
+/Users/sduvivier/Development/FinalTP/MyApp/MyApp.WebApp/obj/Debug/net9.0/MyApp.WebApp.sourcelink.json
