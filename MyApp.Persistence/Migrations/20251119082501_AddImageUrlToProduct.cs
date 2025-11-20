@@ -10,7 +10,6 @@ namespace MyApp.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Ajouter la colonne ImageUrl seulement si elle n'existe pas déjà
             migrationBuilder.Sql(@"
                 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'T_Products' AND COLUMN_NAME = 'ImageUrl')
                 BEGIN
@@ -46,7 +45,6 @@ namespace MyApp.Persistence.Migrations
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
 
-            // Supprimer la colonne ImageUrl seulement si elle existe
             migrationBuilder.Sql(@"
                 IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'T_Products' AND COLUMN_NAME = 'ImageUrl')
                 BEGIN

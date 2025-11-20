@@ -20,14 +20,12 @@ public class TokenHandler : DelegatingHandler
     {
         string? accessToken = null;
         
-        // Essayer d'abord de récupérer le token depuis le HttpContext (si disponible)
         if (_httpContextAccessor.HttpContext != null)
         {
             accessToken = await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
             Console.WriteLine($"[TokenHandler] Token depuis HttpContext: {(accessToken != null ? "Trouvé" : "Null")}");
         }
         
-        // Sinon, essayer de récupérer le token depuis le TokenProvider (pour les circuits Blazor)
         if (string.IsNullOrEmpty(accessToken))
         {
             try
@@ -54,7 +52,6 @@ public class TokenHandler : DelegatingHandler
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             Console.WriteLine($"[TokenHandler] ✅ Token ajouté au header pour {request.RequestUri}");
             
-            // Décoder et afficher le contenu du token pour debug
             try
             {
                 var handler = new JwtSecurityTokenHandler();

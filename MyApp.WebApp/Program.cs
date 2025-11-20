@@ -129,9 +129,9 @@ builder.Services.AddAuthentication(options =>
                             if (realmAccessClaim != null)
                             {
                                 var realmAccess = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(realmAccessClaim.Value);
+                                var rolesAdded = new List<string>();
                                 if (realmAccess.TryGetProperty("roles", out var rolesArray))
                                 {
-                                    var rolesAdded = new List<string>();
                                     foreach (var role in rolesArray.EnumerateArray())
                                     {
                                         var roleValue = role.GetString();
@@ -141,12 +141,11 @@ builder.Services.AddAuthentication(options =>
                                             rolesAdded.Add(roleValue);
                                         }
                                     }
-                                    if (rolesAdded.Any())
-                                    {
-                                        Console.WriteLine($"✅ [Blazor] Rôles ajoutés dans OnTicketReceived: {string.Join(", ", rolesAdded)}");
-                                        // Mettre à jour le principal dans le contexte
-                                        context.Principal = new System.Security.Claims.ClaimsPrincipal(identity);
-                                    }
+                                }
+                                if (rolesAdded.Any())
+                                {
+                                    Console.WriteLine($"✅ [Blazor] Rôles ajoutés dans OnTicketReceived: {string.Join(", ", rolesAdded)}");
+                                    context.Principal = new System.Security.Claims.ClaimsPrincipal(identity);
                                 }
                             }
                         }
@@ -245,7 +244,6 @@ var configureHandler = () =>
     return handler;
 };
 
-// Clients HTTP pour l'API
 builder.Services.AddHttpClient<IProductClient, ProductClient>(configureHttpClient)
     .ConfigurePrimaryHttpMessageHandler(configureHandler);
 
@@ -277,7 +275,6 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Endpoints d'authentification
 app.MapGet("/login", () => Results.Challenge(new Microsoft.AspNetCore.Authentication.AuthenticationProperties 
 { 
     RedirectUri = "/" 
@@ -349,7 +346,6 @@ app.MapPost("/logout", async (Microsoft.AspNetCore.Http.HttpContext context) =>
         </head>
         <body>
             <script>
-                // Forcer une navigation complète pour éviter la négociation SignalR
                 window.location.replace('/');
             </script>
             <noscript>

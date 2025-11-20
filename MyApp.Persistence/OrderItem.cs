@@ -10,8 +10,7 @@ public class OrderItem
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     
-    // Navigation properties
-    [JsonIgnore] // Éviter les cycles de référence lors de la sérialisation JSON
+    [JsonIgnore]
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
 }

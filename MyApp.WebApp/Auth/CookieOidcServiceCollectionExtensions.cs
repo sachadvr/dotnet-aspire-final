@@ -15,9 +15,7 @@ internal static class CookieOidcServiceCollectionExtensions
         });
         services.AddOptions<OpenIdConnectOptions>(oidcScheme).Configure(oidcOptions =>
         {
-            // Request a refresh_token.
             oidcOptions.Scope.Add("offline_access");
-            // Store the refresh_token.
             oidcOptions.SaveTokens = true;
         });
         return services;

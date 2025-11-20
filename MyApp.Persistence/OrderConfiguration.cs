@@ -17,7 +17,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.Address).IsRequired().HasMaxLength(500);
         builder.Property(o => o.PaymentLink).HasMaxLength(1000);
         
-        // Relations
         builder.HasMany(o => o.OrderItems)
             .WithOne(oi => oi.Order)
             .HasForeignKey(oi => oi.OrderId)

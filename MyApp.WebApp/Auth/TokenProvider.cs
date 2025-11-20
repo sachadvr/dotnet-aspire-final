@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Authentication;
 
 namespace MyApp.WebApp.Auth;
 
-/// <summary>
-/// Service qui stocke le token d'accès pour le circuit Blazor actuel
-/// </summary>
 public class TokenProvider
 {
     private string? _accessToken;
@@ -19,10 +16,6 @@ public class TokenProvider
     public bool HasToken => !string.IsNullOrEmpty(_accessToken);
 }
 
-/// <summary>
-/// Circuit handler qui initialise le TokenProvider avec le token d'accès
-/// lors de la connexion du circuit Blazor
-/// </summary>
 public class TokenCircuitHandler : CircuitHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -36,7 +29,6 @@ public class TokenCircuitHandler : CircuitHandler
     
     public override async Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)
     {
-        // Récupérer le token depuis le HttpContext (disponible uniquement lors de la connexion initiale)
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext != null)
         {

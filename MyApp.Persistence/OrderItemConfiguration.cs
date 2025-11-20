@@ -11,7 +11,5 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.HasKey(oi => oi.Id);
         builder.Property(oi => oi.Quantity).IsRequired();
         builder.Property(oi => oi.UnitPrice).HasColumnType("decimal(18,2)").IsRequired();
-        
-        // Relations déjà définies dans ProductConfiguration et OrderConfiguration
     }
 }

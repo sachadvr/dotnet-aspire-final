@@ -18,10 +18,8 @@ internal sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> 
 
     public async Task ValidateOrRefreshCookieAsync(CookieValidatePrincipalContext validateContext, string oidcScheme)
     {
-        // D'abord, extraire les rôles depuis le token d'accès si nécessaire
         ExtractRolesFromAccessToken(validateContext);
 
-        // Ensuite, vérifier si le token doit être rafraîchi
         var accessTokenExpirationText = validateContext.Properties.GetTokenValue("expires_at");
         if (!DateTimeOffset.TryParse(accessTokenExpirationText, out var accessTokenExpiration))
         {
@@ -71,7 +69,6 @@ internal sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> 
 
         validateContext.ShouldRenew = true;
         
-        // Extraire les rôles depuis le nouveau token d'accès et les ajouter au principal
         var newIdentity = validationResult.ClaimsIdentity;
         ExtractRolesFromAccessToken(message.AccessToken, newIdentity);
         
@@ -95,14 +92,12 @@ internal sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> 
             return;
         }
 
-        // Vérifier si les rôles sont déjà présents
         var existingRoles = identity.FindAll("roles").ToList();
         if (existingRoles.Any())
         {
-            return; // Les rôles sont déjà présents
+            return;
         }
 
-        // Extraire depuis le token d'accès stocké
         var accessToken = validateContext.Properties.GetTokenValue("access_token");
         if (string.IsNullOrEmpty(accessToken))
         {

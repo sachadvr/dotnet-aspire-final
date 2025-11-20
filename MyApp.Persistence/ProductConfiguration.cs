@@ -17,7 +17,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.CreatedAt).IsRequired();
         builder.Property(p => p.CategoryId).IsRequired(false);
         
-        // Relations
         builder.HasOne(p => p.Category)
             .WithMany(c => c.Products)
             .HasForeignKey(p => p.CategoryId)

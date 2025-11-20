@@ -64,7 +64,6 @@ public class AdminClient(HttpClient httpClient) : IAdminClient
         }
     }
 
-    // Commandes
     public async Task<List<Order>> GetOrdersAsync()
     {
         try
@@ -113,7 +112,6 @@ public class AdminClient(HttpClient httpClient) : IAdminClient
         }
     }
 
-    // Catégories
     public async Task<List<Category>> GetCategoriesAsync()
     {
         try

@@ -5,18 +5,12 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
-
-// Configure SQL Server DbContext
 builder.AddSqlServerDbContext<MyAppContext>(connectionName: "myapp");
 
-// Configure Authentication JWT
-// Si on a une connection string Keycloak (via Aspire), elle contient déjà /realms/myapp
-// Sinon, on prend la configuration OIDC Authority, ou on construit l'URL
 var keycloakConnectionString = builder.Configuration.GetConnectionString("keycloak");
 var keycloakAuthority = !string.IsNullOrEmpty(keycloakConnectionString)
-    ? keycloakConnectionString  // Aspire fournit déjà l'URL complète
+    ? keycloakConnectionString
     : builder.Configuration["Authentication:OIDC:Authority"] ?? "http://localhost:8090/realms/myapp";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -50,20 +44,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             },
             OnTokenValidated = context =>
             {
-                // Extraire les rôles depuis realm_access.roles
                 if (context.Principal?.Identity is System.Security.Claims.ClaimsIdentity identity)
                 {
-                    // Chercher le claim realm_access
                     var realmAccessClaim = identity.FindFirst("realm_access");
                     if (realmAccessClaim != null)
                     {
                         try
                         {
-                            // Parser le JSON realm_access
                             var realmAccess = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(realmAccessClaim.Value);
                             if (realmAccess.TryGetProperty("roles", out var rolesArray))
                             {
-                                // Ajouter chaque rôle comme un claim individuel de type "roles"
                                 foreach (var role in rolesArray.EnumerateArray())
                                 {
                                     var roleValue = role.GetString();
@@ -148,7 +138,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Appliquer les migrations EF Core au démarrage
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MyAppContext>();
@@ -156,15 +145,12 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine("=== Application des migrations de base de données ===");
 
-        // Lister toutes les migrations disponibles
         var allMigrations = db.Database.GetMigrations().ToList();
         Console.WriteLine($"Migrations disponibles dans le code: {string.Join(", ", allMigrations)}");
 
-        // Lister les migrations appliquées
         var appliedMigrations = db.Database.GetAppliedMigrations().ToList();
         Console.WriteLine($"Migrations déjà appliquées: {string.Join(", ", appliedMigrations)}");
 
-        // Lister les migrations en attente
         var pendingMigrations = db.Database.GetPendingMigrations().ToList();
         Console.WriteLine($"Migrations en attente: {string.Join(", ", pendingMigrations)}");
 
@@ -183,11 +169,9 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"❌ Erreur lors de l'application des migrations: {ex.Message}");
         Console.WriteLine($"Stack trace: {ex.StackTrace}");
-        throw; // Relancer l'exception pour arrêter l'application si les migrations échouent
+        throw;
     }
 }
-
-// PRODUITS
 app.MapGet("/api/products", async (MyAppContext db) =>
     await db.Products.Include(p => p.Category).ToListAsync());
 
@@ -238,14 +222,12 @@ app.MapPost("/api/orders", async (CreateOrderRequest request, System.Security.Cl
         ?? user.FindFirst("sub")?.Value
         ?? throw new UnauthorizedAccessException("Utilisateur non identifié");
 
-    // Récupérer le nom complet depuis user.Identity.Name (configuré avec NameClaimType = "name")
     var userName = user.Identity?.Name
         ?? user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
         ?? user.FindFirst("name")?.Value
         ?? user.FindFirst("preferred_username")?.Value
         ?? "Utilisateur inconnu";
 
-    // Vérifier que tous les produits existent et sont en stock
     var productIds = request.Items.Select(i => i.ProductId).ToList();
     var products = await db.Products
         .Include(p => p.Category)
@@ -257,7 +239,6 @@ app.MapPost("/api/orders", async (CreateOrderRequest request, System.Security.Cl
         return Results.BadRequest("Un ou plusieurs produits n'existent pas");
     }
 
-    // Vérifier le stock et calculer le total
     decimal totalAmount = 0;
     var orderItems = new List<OrderItem>();
 
@@ -279,7 +260,6 @@ app.MapPost("/api/orders", async (CreateOrderRequest request, System.Security.Cl
             UnitPrice = unitPrice
         });
 
-        // Réduire le stock
         product.Stock -= item.Quantity;
     }
 
@@ -311,7 +291,6 @@ app.MapPost("/api/orders", async (CreateOrderRequest request, System.Security.Cl
 })
 .RequireAuthorization();
 
-// Categories
 app.MapGet("/api/categories", async (MyAppContext db) =>
     await db.Categories.OrderBy(c => c.Name).ToListAsync());
 
@@ -361,7 +340,6 @@ app.MapDelete("/api/admin/categories/{id}", async (int id, MyAppContext db) =>
         return Results.NotFound();
     }
 
-    // Vérifier s'il y a des produits associés
     var hasProducts = await db.Products.AnyAsync(p => p.CategoryId == id);
     if (hasProducts)
     {
@@ -384,7 +362,6 @@ app.MapPost("/api/admin/products", async (Product product, MyAppContext db) =>
     db.Products.Add(product);
     await db.SaveChangesAsync();
 
-    // Recharger avec la catégorie
     await db.Entry(product).Reference(p => p.Category).LoadAsync();
     return Results.Created($"/api/admin/products/{product.Id}", product);
 })
@@ -407,7 +384,6 @@ app.MapPut("/api/admin/products/{id}", async (int id, Product updatedProduct, My
 
     await db.SaveChangesAsync();
 
-    // Recharger avec la catégorie
     await db.Entry(product).Reference(p => p.Category).LoadAsync();
     return Results.Ok(product);
 })
@@ -421,7 +397,6 @@ app.MapDelete("/api/admin/products/{id}", async (int id, MyAppContext db) =>
         return Results.NotFound();
     }
 
-    // Vérifier s'il y a des commandes associées
     var hasOrders = await db.OrderItems.AnyAsync(oi => oi.ProductId == id);
     if (hasOrders)
     {
@@ -483,7 +458,6 @@ app.MapPost("/api/admin/orders/{id}/payment-link", async (int id, GeneratePaymen
 
 app.Run();
 
-// DTOs pour les requêtes
 public record CreateOrderRequest(List<CreateOrderItemRequest> Items, string Address);
 public record CreateOrderItemRequest(int ProductId, int Quantity);
 public record UpdateOrderStatusRequest(string Status);

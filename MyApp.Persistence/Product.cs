@@ -9,9 +9,8 @@ public class Product
     public int Stock { get; set; }
     public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int? CategoryId { get; set; } // Foreign key vers Category
+    public int? CategoryId { get; set; }
     
-    // Navigation properties
     public Category? Category { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

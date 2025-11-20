@@ -13,10 +13,9 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Description).HasMaxLength(500);
         builder.Property(c => c.CreatedAt).IsRequired();
         
-        // Relations
         builder.HasMany(c => c.Products)
             .WithOne(p => p.Category)
             .HasForeignKey(p => p.CategoryId)
-            .OnDelete(DeleteBehavior.SetNull); // Si une catégorie est supprimée, les produits gardent leur CategoryId mais la relation devient null
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
